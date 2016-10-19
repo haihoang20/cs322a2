@@ -1,5 +1,7 @@
 package sudoku;
 
+import java.util.ArrayList;
+
 /**
  * Place for your code.
  */
@@ -9,8 +11,7 @@ public class SudokuSolver {
 	 * @return names of the authors and their student IDs (1 per line).
 	 */
 	public String authors() {
-		// TODO write it;
-		return "NAMES OF THE AUTHORS AND THEIR STUDENT IDs (1 PER LINE)";
+		return "NAMES OF THE AUTHORS AND THEIR STUDENT IDS (1 PER LINE)";
 	}
 
 	/**
