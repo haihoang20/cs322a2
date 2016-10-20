@@ -75,22 +75,22 @@ public class SudokuSolver {
 
 	private boolean checkSquares(int[][] board) {
 		// HashSets don't accept duplicates
-//		HashSet<Integer> squareValues = new HashSet<>();
-//		for (int i = 0; i < board.length; i=i+3) {
-//			for (int j = 0; j < board.length; j=j+3) {
-//				for (int k = i; k < i+3; k++) {
-//					for (int l = j; l < j+3; i++) {
-//						squareValues.add(board[k][l]);
-//					}
-//				}
-//				// this means that there was at least one duplicate
-//				if (squareValues.size() < 9) {
-//					return false;
-//				}
-//				// reset to check a different square
-//				squareValues.clear();
-//			}
-//		}
+		HashSet<Integer> squareValues = new HashSet<>();
+		for (int i = 0; i < board.length; i=i+3) {
+			for (int j = 0; j < board.length; j=j+3) {
+				for (int k = i; k < i+3; k++) {
+					for (int l = j; l < j+3; l++) {
+						squareValues.add(board[k][l]);
+					}
+				}
+				// this means that there was at least one duplicate
+				if (squareValues.size() < 9) {
+					return false;
+				}
+				// reset to check a different square
+				squareValues.clear();
+			}
+		}
 		return true;
 	}
 
