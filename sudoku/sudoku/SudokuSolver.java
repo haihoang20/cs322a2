@@ -54,6 +54,20 @@ public class SudokuSolver {
 	}
 
 	private boolean checkColumns(int[][] board) {
+		int cellToCompare;
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board.length; j++) {
+				cellToCompare = board[j][i];
+				if (cellToCompare == 0){
+					return false;
+				}
+				for (int k = j; k < board.length-1; k++) {
+					if (board[k][i] == 0 || cellToCompare == board[k+1][i]) {
+						return false;
+					}
+				}
+			}
+		}
 		return true;
 	}
 
