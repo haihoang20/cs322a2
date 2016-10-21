@@ -1,7 +1,9 @@
 package sudoku;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Stack;
 
 /**
  * Place for your code.
@@ -26,7 +28,7 @@ public class SudokuSolver {
 		int[][] newBoard = board;
 
 		HashSet<Integer> domainOfSingleCell = this.createDomainForSingleCell();
-		HashMap<int[], HashSet<Integer>> domainOfAllCells = this.createDomainForEntireBoard(newBoard, domainOfSingleCell);
+		HashMap<Integer, HashSet<Integer>> domainOfAllCells = this.createDomainForEntireBoard(newBoard, domainOfSingleCell);
 
 
 		// this will be changed to while(!this.isSolved(board)
@@ -37,8 +39,28 @@ public class SudokuSolver {
 		// this.applyArcConsistency
 		// this.applyDomainSplitting
 		// limit--;
-		if (!this.isSolved(newBoard)) {
-			//domainOfAllCells = this.applyArcConsistency(newBoard, domainOfAllCells);
+		
+		//System.out.println("domain" + domainOfAllCells.size());
+
+		int limit = 10;
+		while (!this.isSolved(newBoard) && limit != 0) {
+			domainOfAllCells = this.applyArcConsistency(newBoard, domainOfAllCells);
+			limit--;
+			
+			for (int i = 0; i < domainOfAllCells.size(); ++i)
+			{
+				HashSet<Integer> currentCell = domainOfAllCells.get(i);
+				if (currentCell.size() == 1)
+				{
+					for (Integer value : currentCell)
+					{
+						int modulus = i % 9;
+						int column = modulus;
+						int row = Math.floorDiv(i, 9);
+						newBoard[row][column] = value;
+					}
+				}
+			}
 			// if (check if domain is > 1)
 			// this.applyDomainSplitting
 
@@ -46,9 +68,9 @@ public class SudokuSolver {
 			// or we can make a helper function with that
 			// we'll need to check that the domain for each cell is exactly 1 value before doing this
 			System.out.println("This board is not solved");
-		} else {
-			System.out.println("Solved!!");
 		}
+		
+		System.out.println("Solved or Timeout");
 		return newBoard;
 	}
 
@@ -62,6 +84,7 @@ public class SudokuSolver {
 		for (int i = 1; i < 10; i++){
 			domainOfSingleCell.add(i);
 		}
+		
 		return domainOfSingleCell;
 	}
 
@@ -73,26 +96,20 @@ public class SudokuSolver {
 	 * @param domainOfSingleCell
 	 * @return HashMap
 	 */
-	private HashMap<int[], HashSet<Integer>> createDomainForEntireBoard(int[][] board, HashSet<Integer> domainOfSingleCell) {
-		HashMap<int[], HashSet<Integer>> domainOfAllCells = new HashMap<>();
-		// cell is int[2] to represent the row,column
-		int[] cell = new int[2];
-		HashSet<Integer> singleValueDomain = new HashSet<>();
-		
-		for(int i = 0; i < board.length; i++) {
-			for (int j = 0; j < board.length; j++) {
-				cell[0] = i;
-				cell[1] = j;
-				
+	private HashMap<Integer, HashSet<Integer>> createDomainForEntireBoard(int[][] board, HashSet<Integer> domainOfSingleCell) {
+		HashMap<Integer, HashSet<Integer>> domainOfAllCells = new HashMap<>();
+		for(int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
 				if (board[i][j] == 0) {
-					domainOfAllCells.put(cell,domainOfSingleCell);
+					domainOfAllCells.put((i*9) + j,domainOfSingleCell);
 				} else {
+					HashSet<Integer> singleValueDomain = new HashSet<>();
 					singleValueDomain.add(board[i][j]);
-					domainOfAllCells.put(cell, singleValueDomain);
-					singleValueDomain.clear();
+					domainOfAllCells.put((i*9) + j, singleValueDomain);
 				}
 			}
 		}
+		
 		return domainOfAllCells;
 	}
 
@@ -135,16 +152,54 @@ public class SudokuSolver {
 	 */
 	private boolean checkSpecificRow(int row, int column, int value, int[][] board) {
 		int cellToCompare;
-		for (int i = 0; i < board.length; i++) {
-			cellToCompare = board[row][i];
+		for (int j = 0; j < board[row].length; ++j) {
+			cellToCompare = board[row][j];
 			// iterate through the row's column and see if value is already present in the row
-			if (column != i && cellToCompare == value ){
+			if (j != column && cellToCompare == value ){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * goes through a specific column to check if column is consistent for a specific value of a cell
+	 * @param board
+	 * @return boolean
+	 */
+	private boolean checkSpecificColumn(int row, int column, int value, int[][] board) {
+		int cellToCompare;
+		for (int i = 0; i < board.length; ++i) {
+			cellToCompare = board[i][column];
+			// iterate through the row's column and see if value is already present in the row
+			if (i != row && cellToCompare == value){
 				return false;
 			}
 		}
 		return true;
 	}
 
+	/**
+	 * goes through a specific block to check if block is consistent for a specific value of a cell
+	 * @param board
+	 * @return boolean
+	 */
+	private boolean checkSpecificBlock(int row, int column, int value, int[][] board) {
+		int startRow = row - (row % 3);
+		int startColumn = column - (column %3);
+		
+		for (int i = startRow; i < startRow + 3; ++i) {
+			for (int j = startColumn; j < startColumn + 3; ++j){				
+				if (board[i][j] == value){
+					return false;
+				}
+
+			}
+		}
+		
+		return true;
+	}
+	
 	/**
 	 * goes through the entire board column by column to check for 0's and duplicates
 	 * @param board
@@ -198,8 +253,60 @@ public class SudokuSolver {
 	}
 
 	// TODO: need to check if this is correct
-	private HashMap<int[], HashSet<Integer>> applyArcConsistency(int[][] board, HashMap<int[], HashSet<Integer>> domainOfAllCells) {
-		int valueInCellToCompare;
+	private HashMap<Integer, HashSet<Integer>> applyArcConsistency(int[][] board, HashMap<Integer, HashSet<Integer>> domainOfAllCells) {
+		boolean recheck = true;
+		int[][] newBoard = board;
+		while (recheck){
+			recheck = false;
+			for (int i = 0; i < 9; i++) {
+				for (int j = 0; j < 9; j++) {
+					HashSet<Integer> domainOfSingleCell = new HashSet<Integer>();
+					domainOfSingleCell = domainOfAllCells.get((i*9) + j);
+					ArrayList<Integer> toRemove = new ArrayList<Integer>();
+					if (domainOfSingleCell.size() > 1)
+					{
+						for (Integer dom : domainOfSingleCell){	
+							
+							if (!this.checkSpecificColumn(i, j, dom, newBoard)){
+								//domain for that variable is not consistent
+								toRemove.add(dom);
+								recheck = true;
+							}
+							else if (!this.checkSpecificBlock(i,j, dom, newBoard)){
+								toRemove.add(dom);
+								recheck = true;
+							}
+							else if (!this.checkSpecificRow(i,j, dom, newBoard)){
+								// TODO: not sure why this is false
+								//toRemove.add(dom);
+								recheck = true;
+							}	
+						}
+					}
+					if (toRemove.size() > 0)
+					{
+						for (int k = 0; k < toRemove.size(); ++k)
+						{
+							domainOfSingleCell.remove(toRemove.get(k));
+						}
+					}
+
+					if (recheck){
+						domainOfAllCells.put((i*9) + j, domainOfSingleCell);
+						
+						if (domainOfSingleCell.size() == 1)
+						{
+							for (Integer value : domainOfSingleCell)
+							{
+								newBoard[i][j] = value;
+							}
+						}
+					}
+				}
+			}
+		}	
+		
+		/*
 		int[] key = new int[2];
 		HashSet<Integer> domainOfSingleCell;
 		// goes through rows
@@ -209,9 +316,9 @@ public class SudokuSolver {
 				for (int k = 0; k < board.length; k++) {
 					key[0] = i;
 					key[1] = k;
-					domainOfSingleCell = domainOfAllCells.get(key);
+					domainOfSingleCell = domainOfAllCells.get((i*9) + k);
 					domainOfSingleCell.remove(valueInCellToCompare);
-					domainOfAllCells.put(key, domainOfSingleCell);
+					domainOfAllCells.put((i*9) + k, domainOfSingleCell);
 				}
 			}
 		}
@@ -222,13 +329,15 @@ public class SudokuSolver {
 				for (int p = 0; p < board.length; p++) {
 					key[0] = p;
 					key[1] = l;
-					domainOfSingleCell = domainOfAllCells.get(key);
+					domainOfSingleCell = domainOfAllCells.get((p*9) + l);
 					domainOfSingleCell.remove(valueInCellToCompare);
-					domainOfAllCells.put(key, domainOfSingleCell);
+					domainOfAllCells.put((p*9) + l, domainOfSingleCell);
 				}
 			}
 		}
-		// TODO: do we also need one for squares?
+		*/
+		// TODO: do we also need one for squares
+		
 		return domainOfAllCells;
 	}
 
