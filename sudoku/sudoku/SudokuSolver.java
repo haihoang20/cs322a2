@@ -38,7 +38,7 @@ public class SudokuSolver {
 		// this.applyDomainSplitting
 		// limit--;
 		if (!this.isSolved(newBoard)) {
-			domainOfAllCells = this.applyArcConsistency(newBoard, domainOfAllCells);
+			//domainOfAllCells = this.applyArcConsistency(newBoard, domainOfAllCells);
 			// if (check if domain is > 1)
 			// this.applyDomainSplitting
 
@@ -59,8 +59,8 @@ public class SudokuSolver {
 	 */
 	private HashSet<Integer> createDomainForSingleCell() {
 		HashSet<Integer> domainOfSingleCell = new HashSet<>();
-		for (int i = 0; i < 9; i++ ){
-			domainOfSingleCell.add(i+1);
+		for (int i = 1; i < 10; i++){
+			domainOfSingleCell.add(i);
 		}
 		return domainOfSingleCell;
 	}
@@ -78,11 +78,12 @@ public class SudokuSolver {
 		// cell is int[2] to represent the row,column
 		int[] cell = new int[2];
 		HashSet<Integer> singleValueDomain = new HashSet<>();
+		
 		for(int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board.length; j++) {
 				cell[0] = i;
 				cell[1] = j;
-				// TODO: check if this is correct
+				
 				if (board[i][j] == 0) {
 					domainOfAllCells.put(cell,domainOfSingleCell);
 				} else {
@@ -122,6 +123,23 @@ public class SudokuSolver {
 						return false;
 					}
 				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * goes through a specific row to check if row is consistent for a specific value of a cell
+	 * @param board
+	 * @return boolean
+	 */
+	private boolean checkSpecificRow(int row, int column, int value, int[][] board) {
+		int cellToCompare;
+		for (int i = 0; i < board.length; i++) {
+			cellToCompare = board[row][i];
+			// iterate through the row's column and see if value is already present in the row
+			if (column != i && cellToCompare == value ){
+				return false;
 			}
 		}
 		return true;
