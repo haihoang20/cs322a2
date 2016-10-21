@@ -38,9 +38,13 @@ public class SudokuSolver {
 		// this.applyDomainSplitting
 		// limit--;
 		if (!this.isSolved(newBoard)) {
-			this.applyArcConsistency(newBoard, domainOfAllCells);
+			domainOfAllCells = this.applyArcConsistency(newBoard, domainOfAllCells);
 			// if (check if domain is > 1)
 			// this.applyDomainSplitting
+
+			// we can give the newBoard to applyDomainSplitting so that it can create the newBoard with the new values
+			// or we can make a helper function with that
+			// we'll need to check that the domain for each cell is exactly 1 value before doing this
 			System.out.println("This board is not solved");
 		} else {
 			System.out.println("Solved!!");
@@ -64,6 +68,7 @@ public class SudokuSolver {
 	/**
 	 * creates a map of all the cells on the board as keys and maps them to their individual domains
 	 * i.e. cell(3,5) has the domain [1,2,3,4,5,6,7,8,9]
+	 * or cell(5,5) has the domain [3]
 	 * @param board
 	 * @param domainOfSingleCell
 	 * @return HashMap
@@ -72,11 +77,19 @@ public class SudokuSolver {
 		HashMap<int[], HashSet<Integer>> domainOfAllCells = new HashMap<>();
 		// cell is int[2] to represent the row,column
 		int[] cell = new int[2];
+		HashSet<Integer> singleValueDomain = new HashSet<>();
 		for(int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board.length; j++) {
 				cell[0] = i;
 				cell[1] = j;
-				domainOfAllCells.put(cell,domainOfSingleCell);
+				// TODO: check if this is correct
+				if (board[i][j] == 0) {
+					domainOfAllCells.put(cell,domainOfSingleCell);
+				} else {
+					singleValueDomain.add(board[i][j]);
+					domainOfAllCells.put(cell, singleValueDomain);
+					singleValueDomain.clear();
+				}
 			}
 		}
 		return domainOfAllCells;
@@ -166,20 +179,39 @@ public class SudokuSolver {
 		return true;
 	}
 
-	// TODO
-	private int[][] applyArcConsistency(int[][] board, HashMap<int[], HashSet<Integer>> domainOfAllCells) {
-		// code in here is not correct but I left it so you can get the general idea of what I'm doing
-		// Need to pass in all the domains and slowly pick it apart
-		HashSet<Integer> domain = new HashSet<>();
-		// initialize domain of each cell
-		for (int i = 0; i < 9; i++ ){
-			domain.add(i+1);
+	// TODO: need to check if this is correct
+	private HashMap<int[], HashSet<Integer>> applyArcConsistency(int[][] board, HashMap<int[], HashSet<Integer>> domainOfAllCells) {
+		int valueInCellToCompare;
+		int[] key = new int[2];
+		HashSet<Integer> domainOfSingleCell;
+		// goes through rows
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board.length; j++) {
+				valueInCellToCompare = board[i][j];
+				for (int k = 0; k < board.length; k++) {
+					key[0] = i;
+					key[1] = k;
+					domainOfSingleCell = domainOfAllCells.get(key);
+					domainOfSingleCell.remove(valueInCellToCompare);
+					domainOfAllCells.put(key, domainOfSingleCell);
+				}
+			}
 		}
-		// go through row to remove values from domain
-		for (int j = 0; j < board.length; j++) {
-			domain.remove(board[0][j]);
+		// goes through columns
+		for (int l = 0; l < board.length; l++) {
+			for (int m = 0; m < board.length; m++) {
+				valueInCellToCompare = board[m][l];
+				for (int p = 0; p < board.length; p++) {
+					key[0] = p;
+					key[1] = l;
+					domainOfSingleCell = domainOfAllCells.get(key);
+					domainOfSingleCell.remove(valueInCellToCompare);
+					domainOfAllCells.put(key, domainOfSingleCell);
+				}
+			}
 		}
-		return board;
+		// TODO: do we also need one for squares?
+		return domainOfAllCells;
 	}
 
 	// TODO
